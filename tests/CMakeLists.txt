@@ -10,3 +10,5 @@ endfunction()
 
 http_add_unit_test(headers)
 http_add_unit_test(url)
+http_add_unit_test(request)
+http_add_unit_test(response)
