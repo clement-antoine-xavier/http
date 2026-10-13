@@ -78,7 +78,7 @@ static int rehash(headers_t *headers, size_t capacity)
     return 0;
 }
 
-headers_t *headers_create(void)
+headers_t *create_headers(void)
 {
     headers_t *headers = malloc(sizeof(*headers));
     if (!headers)
@@ -94,7 +94,7 @@ headers_t *headers_create(void)
     return headers;
 }
 
-void headers_destroy(headers_t *headers)
+void destroy_headers(headers_t *headers)
 {
     if (!headers)
         return;

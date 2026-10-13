@@ -19,11 +19,11 @@
  * them to be case-insensitive.
  *
  * @code
- * url_t *url = url_parse("https://user@example.com:8443/a/b?x=1#frag");
+ * url_t *url = create_url("https://user@example.com:8443/a/b?x=1#frag");
  * if (url)
  * {
  *     printf("%s://%s\n", url->scheme, url->host);
- *     url_destroy(url);
+ *     destroy_url(url);
  * }
  * @endcode
  */
@@ -36,8 +36,8 @@
  * query == "" and fragment == "", while "http://h/p" yields query == NULL and
  * fragment == NULL.
  *
- * @note Treat instances as opaque; create them with url_parse() and release
- *       them with url_destroy(). All members are owned by the url_t.
+ * @note Treat instances as opaque; create them with create_url() and release
+ *       them with destroy_url(). All members are owned by the url_t.
  */
 typedef struct url_s
 {
@@ -57,16 +57,16 @@ typedef struct url_s
  * @param[in] text NUL-terminated URI reference. Must not contain raw spaces,
  *                 C0 control characters or DEL.
  * @return A newly allocated url_t, or NULL if @p text is NULL or malformed.
- *         Release it with url_destroy().
+ *         Release it with destroy_url().
  */
-url_t *url_parse(const char *text);
+url_t *create_url(const char *text);
 
 /**
  * @brief Release a parsed URL and every component it owns.
  *
  * @param[in] url URL to destroy; may be NULL.
  */
-void url_destroy(url_t *url);
+void destroy_url(url_t *url);
 
 /**
  * @brief Test whether a URL carries a scheme.

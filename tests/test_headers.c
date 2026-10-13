@@ -55,15 +55,15 @@ static int ctx_has_name(const collect_ctx_t *c, const char *name)
 
 TEST(create_returns_empty_map)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_count(h), 0);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(destroy_null_is_safe)
 {
-    headers_destroy(NULL);
+    destroy_headers(NULL);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -72,28 +72,28 @@ TEST(destroy_null_is_safe)
 
 TEST(set_and_get)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_set(h, "Host", "example.com"), 0);
     CHECK_STR_EQ(headers_get(h, "Host"), "example.com");
     CHECK_INT_EQ(headers_count(h), 1);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(get_is_case_insensitive)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_set(h, "Content-Type", "text/html"), 0);
     CHECK_STR_EQ(headers_get(h, "content-type"), "text/html");
     CHECK_STR_EQ(headers_get(h, "CONTENT-TYPE"), "text/html");
     CHECK_STR_EQ(headers_get(h, "CoNtEnT-tYpE"), "text/html");
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(original_spelling_is_preserved)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_set(h, "X-Custom-Header", "v"), 0);
 
@@ -101,12 +101,12 @@ TEST(original_spelling_is_preserved)
     CHECK_INT_EQ(headers_foreach(h, collect, &ctx), 0);
     CHECK_INT_EQ(ctx.count, 1);
     CHECK_TRUE(ctx_has_name(&ctx, "X-Custom-Header"));
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(set_replaces_existing_values)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_add(h, "Accept", "text/html"), 0);
     CHECK_INT_EQ(headers_add(h, "Accept", "application/json"), 0);
@@ -115,12 +115,12 @@ TEST(set_replaces_existing_values)
     CHECK_INT_EQ(headers_set(h, "Accept", "text/plain"), 0);
     CHECK_INT_EQ(headers_count(h), 1);
     CHECK_STR_EQ(headers_get(h, "Accept"), "text/plain");
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(set_does_not_touch_other_names)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_set(h, "A", "1"), 0);
     CHECK_INT_EQ(headers_set(h, "B", "2"), 0);
@@ -128,12 +128,12 @@ TEST(set_does_not_touch_other_names)
     CHECK_INT_EQ(headers_count(h), 2);
     CHECK_STR_EQ(headers_get(h, "A"), "3");
     CHECK_STR_EQ(headers_get(h, "B"), "2");
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(set_collapses_duplicate_case_variants)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_add(h, "X-A", "1"), 0);
     CHECK_INT_EQ(headers_add(h, "x-a", "2"), 0);
@@ -142,7 +142,7 @@ TEST(set_collapses_duplicate_case_variants)
     CHECK_INT_EQ(headers_set(h, "X-A", "3"), 0);
     CHECK_INT_EQ(headers_count(h), 1);
     CHECK_STR_EQ(headers_get(h, "x-a"), "3");
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -151,7 +151,7 @@ TEST(set_collapses_duplicate_case_variants)
 
 TEST(add_appends_without_replacing)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_add(h, "Set-Cookie", "a=1"), 0);
     CHECK_INT_EQ(headers_add(h, "Set-Cookie", "b=2"), 0);
@@ -163,7 +163,7 @@ TEST(add_appends_without_replacing)
     CHECK_TRUE(ctx_has_value(&ctx, "a=1"));
     CHECK_TRUE(ctx_has_value(&ctx, "b=2"));
     CHECK_NOT_NULL(headers_get(h, "Set-Cookie"));
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -172,7 +172,7 @@ TEST(add_appends_without_replacing)
 
 TEST(remove_deletes_all_values)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_add(h, "A", "1"), 0);
     CHECK_INT_EQ(headers_add(h, "A", "2"), 0);
@@ -183,27 +183,27 @@ TEST(remove_deletes_all_values)
     CHECK_INT_EQ(headers_count(h), 1);
     CHECK_FALSE(headers_contains(h, "A"));
     CHECK_STR_EQ(headers_get(h, "B"), "3");
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(remove_absent_returns_minus_one)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_remove(h, "Missing"), -1);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(contains_is_case_insensitive)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     CHECK_INT_EQ(headers_set(h, "X-Test", "1"), 0);
     CHECK_TRUE(headers_contains(h, "x-test"));
     CHECK_TRUE(headers_contains(h, "X-TEST"));
     CHECK_FALSE(headers_contains(h, "X-Other"));
     CHECK_FALSE(headers_contains(NULL, "X-Test"));
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(count_null_is_zero)
@@ -217,7 +217,7 @@ TEST(count_null_is_zero)
 
 TEST(foreach_visits_every_entry)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     for (int i = 0; i < 5; i++)
     {
@@ -229,12 +229,12 @@ TEST(foreach_visits_every_entry)
     collect_ctx_t ctx = {0};
     CHECK_INT_EQ(headers_foreach(h, collect, &ctx), 0);
     CHECK_INT_EQ(ctx.count, 5);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(foreach_stops_early_and_returns_callback_value)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     for (int i = 0; i < 5; i++)
     {
@@ -246,17 +246,17 @@ TEST(foreach_stops_early_and_returns_callback_value)
     collect_ctx_t ctx = {.stop_after = 2};
     CHECK_INT_EQ(headers_foreach(h, collect, &ctx), 42);
     CHECK_INT_EQ(ctx.count, 2);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 TEST(foreach_invalid_arguments)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
     collect_ctx_t ctx = {0};
     CHECK_INT_EQ(headers_foreach(NULL, collect, &ctx), -1);
     CHECK_INT_EQ(headers_foreach(h, NULL, &ctx), -1);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -265,7 +265,7 @@ TEST(foreach_invalid_arguments)
 
 TEST(invalid_arguments_are_rejected)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
 
     CHECK_INT_EQ(headers_add(NULL, "A", "1"), -1);
@@ -284,7 +284,7 @@ TEST(invalid_arguments_are_rejected)
     CHECK_INT_EQ(headers_remove(h, NULL), -1);
 
     CHECK_INT_EQ(headers_count(h), 0);
-    headers_destroy(h);
+    destroy_headers(h);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -293,7 +293,7 @@ TEST(invalid_arguments_are_rejected)
 
 TEST(rehash_preserves_entries)
 {
-    headers_t *h = headers_create();
+    headers_t *h = create_headers();
     REQUIRE(h != NULL);
 
     const int n = 200; /* well past HEADERS_DEFAULT_CAPACITY * 3 / 4 */
@@ -314,5 +314,5 @@ TEST(rehash_preserves_entries)
         CHECK_STR_EQ(headers_get(h, name), value);
     }
 
-    headers_destroy(h);
+    destroy_headers(h);
 }

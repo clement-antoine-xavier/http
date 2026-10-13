@@ -10,7 +10,7 @@
 
 static void check_round_trip(const char *text)
 {
-    url_t *url = url_parse(text);
+    url_t *url = create_url(text);
     REQUIRE(url != NULL);
     char *out = url_to_string(url);
     CHECK_NOT_NULL(out);
@@ -19,7 +19,7 @@ static void check_round_trip(const char *text)
         CHECK_STR_EQ(out, text);
         free(out);
     }
-    url_destroy(url);
+    destroy_url(url);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -28,7 +28,7 @@ static void check_round_trip(const char *text)
 
 TEST(parse_full_url)
 {
-    url_t *url = url_parse("https://user:pass@example.com:8443/a/b?x=1#frag");
+    url_t *url = create_url("https://user:pass@example.com:8443/a/b?x=1#frag");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->scheme, "https");
     CHECK_STR_EQ(url->userinfo, "user:pass");
@@ -38,12 +38,12 @@ TEST(parse_full_url)
     CHECK_STR_EQ(url->query, "x=1");
     CHECK_STR_EQ(url->fragment, "frag");
     CHECK_TRUE(url_is_absolute(url));
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(no_path_leaves_empty_path)
 {
-    url_t *url = url_parse("http://example.com");
+    url_t *url = create_url("http://example.com");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->scheme, "http");
     CHECK_STR_EQ(url->host, "example.com");
@@ -53,60 +53,60 @@ TEST(no_path_leaves_empty_path)
     CHECK_NULL(url->query);
     CHECK_NULL(url->fragment);
     CHECK_INT_EQ(url_default_port(url), 80);
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(userinfo_without_port)
 {
-    url_t *url = url_parse("http://user:secret@example.com/");
+    url_t *url = create_url("http://user:secret@example.com/");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->userinfo, "user:secret");
     CHECK_STR_EQ(url->host, "example.com");
     CHECK_NULL(url->port);
     CHECK_STR_EQ(url->path, "/");
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(ipv6_literal_with_port)
 {
-    url_t *url = url_parse("http://[2001:db8::1]:8080/index.html");
+    url_t *url = create_url("http://[2001:db8::1]:8080/index.html");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->host, "2001:db8::1");
     CHECK_STR_EQ(url->port, "8080");
     CHECK_STR_EQ(url->path, "/index.html");
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(ipv6_literal_without_port)
 {
-    url_t *url = url_parse("http://[::1]/");
+    url_t *url = create_url("http://[::1]/");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->host, "::1");
     CHECK_NULL(url->port);
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(empty_authority_host)
 {
-    url_t *url = url_parse("file:///etc/hosts");
+    url_t *url = create_url("file:///etc/hosts");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->scheme, "file");
     CHECK_NOT_NULL(url->host);
     CHECK_STR_EQ(url->host, "");
     CHECK_STR_EQ(url->path, "/etc/hosts");
     CHECK_NULL(url->port);
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(opaque_path_with_scheme_but_no_authority)
 {
-    url_t *url = url_parse("mailto:user@example.com");
+    url_t *url = create_url("mailto:user@example.com");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->scheme, "mailto");
     CHECK_NULL(url->host);
     CHECK_STR_EQ(url->path, "user@example.com");
     CHECK_TRUE(url_is_absolute(url));
-    url_destroy(url);
+    destroy_url(url);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -115,22 +115,22 @@ TEST(opaque_path_with_scheme_but_no_authority)
 
 TEST(empty_query_and_fragment_are_present)
 {
-    url_t *url = url_parse("http://h/p?#");
+    url_t *url = create_url("http://h/p?#");
     REQUIRE(url != NULL);
     CHECK_NOT_NULL(url->query);
     CHECK_STR_EQ(url->query, "");
     CHECK_NOT_NULL(url->fragment);
     CHECK_STR_EQ(url->fragment, "");
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(absent_query_and_fragment_are_null)
 {
-    url_t *url = url_parse("http://h/p");
+    url_t *url = create_url("http://h/p");
     REQUIRE(url != NULL);
     CHECK_NULL(url->query);
     CHECK_NULL(url->fragment);
-    url_destroy(url);
+    destroy_url(url);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -139,14 +139,14 @@ TEST(absent_query_and_fragment_are_null)
 
 TEST(scheme_and_host_are_lowercased)
 {
-    url_t *url = url_parse("HTTP://EXAMPLE.COM/Path?Q=V#Frag");
+    url_t *url = create_url("HTTP://EXAMPLE.COM/Path?Q=V#Frag");
     REQUIRE(url != NULL);
     CHECK_STR_EQ(url->scheme, "http");
     CHECK_STR_EQ(url->host, "example.com");
     CHECK_STR_EQ(url->path, "/Path");
     CHECK_STR_EQ(url->query, "Q=V");
     CHECK_STR_EQ(url->fragment, "Frag");
-    url_destroy(url);
+    destroy_url(url);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -155,7 +155,7 @@ TEST(scheme_and_host_are_lowercased)
 
 TEST(relative_reference)
 {
-    url_t *url = url_parse("/a/b?x=1#f");
+    url_t *url = create_url("/a/b?x=1#f");
     REQUIRE(url != NULL);
     CHECK_NULL(url->scheme);
     CHECK_NULL(url->host);
@@ -163,18 +163,18 @@ TEST(relative_reference)
     CHECK_STR_EQ(url->path, "/a/b");
     CHECK_STR_EQ(url->query, "x=1");
     CHECK_STR_EQ(url->fragment, "f");
-    url_destroy(url);
+    destroy_url(url);
 }
 
 TEST(network_path_reference)
 {
-    url_t *url = url_parse("//example.com/path");
+    url_t *url = create_url("//example.com/path");
     REQUIRE(url != NULL);
     CHECK_NULL(url->scheme);
     CHECK_STR_EQ(url->host, "example.com");
     CHECK_STR_EQ(url->path, "/path");
     CHECK_FALSE(url_is_absolute(url));
-    url_destroy(url);
+    destroy_url(url);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -183,11 +183,11 @@ TEST(network_path_reference)
 
 TEST(default_ports)
 {
-    url_t *http = url_parse("http://h/");
-    url_t *https = url_parse("https://h/");
-    url_t *ws = url_parse("ws://h/");
-    url_t *ftp = url_parse("ftp://h/");
-    url_t *other = url_parse("gopher://h/");
+    url_t *http = create_url("http://h/");
+    url_t *https = create_url("https://h/");
+    url_t *ws = create_url("ws://h/");
+    url_t *ftp = create_url("ftp://h/");
+    url_t *other = create_url("gopher://h/");
     REQUIRE(http != NULL);
     REQUIRE(https != NULL);
     REQUIRE(ws != NULL);
@@ -201,11 +201,11 @@ TEST(default_ports)
     CHECK_INT_EQ(url_default_port(other), -1);
     CHECK_INT_EQ(url_default_port(NULL), -1);
 
-    url_destroy(http);
-    url_destroy(https);
-    url_destroy(ws);
-    url_destroy(ftp);
-    url_destroy(other);
+    destroy_url(http);
+    destroy_url(https);
+    destroy_url(ws);
+    destroy_url(ftp);
+    destroy_url(other);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -214,15 +214,15 @@ TEST(default_ports)
 
 TEST(reject_invalid_input)
 {
-    CHECK_NULL(url_parse(NULL));
-    CHECK_NULL(url_parse("1http://example.com"));  /* scheme starts with digit */
-    CHECK_NULL(url_parse("://example.com"));       /* empty scheme */
-    CHECK_NULL(url_parse("ht tp://example.com"));  /* raw space */
-    CHECK_NULL(url_parse("http://exa mple.com"));  /* raw space in host */
-    CHECK_NULL(url_parse("http://host:abc/"));     /* non-digit port */
-    CHECK_NULL(url_parse("http://host:99999/"));   /* port out of range */
-    CHECK_NULL(url_parse("http://host:123456/"));  /* too many digits */
-    CHECK_NULL(url_parse("http://[::1/"));         /* unterminated IPv6 literal */
+    CHECK_NULL(create_url(NULL));
+    CHECK_NULL(create_url("1http://example.com"));  /* scheme starts with digit */
+    CHECK_NULL(create_url("://example.com"));       /* empty scheme */
+    CHECK_NULL(create_url("ht tp://example.com"));  /* raw space */
+    CHECK_NULL(create_url("http://exa mple.com"));  /* raw space in host */
+    CHECK_NULL(create_url("http://host:abc/"));     /* non-digit port */
+    CHECK_NULL(create_url("http://host:99999/"));   /* port out of range */
+    CHECK_NULL(create_url("http://host:123456/"));  /* too many digits */
+    CHECK_NULL(create_url("http://[::1/"));         /* unterminated IPv6 literal */
 }
 
 /* ------------------------------------------------------------------------- */
@@ -231,7 +231,7 @@ TEST(reject_invalid_input)
 
 TEST(null_safety)
 {
-    url_destroy(NULL);
+    destroy_url(NULL);
     CHECK_NULL(url_to_string(NULL));
     CHECK_FALSE(url_is_absolute(NULL));
 }

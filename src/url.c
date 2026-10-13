@@ -61,7 +61,7 @@ static int valid_text(const char *text)
     return 1;
 }
 
-url_t *url_parse(const char *text)
+url_t *create_url(const char *text)
 {
     if (!text || !valid_text(text))
         return NULL;
@@ -249,11 +249,11 @@ url_t *url_parse(const char *text)
     return url;
 
 fail:
-    url_destroy(url);
+    destroy_url(url);
     return NULL;
 }
 
-void url_destroy(url_t *url)
+void destroy_url(url_t *url)
 {
     if (!url)
         return;

@@ -13,7 +13,7 @@
  */
 
 /**
- * @brief Number of buckets allocated by headers_create().
+ * @brief Number of buckets allocated by create_headers().
  */
 #define HEADERS_DEFAULT_CAPACITY 16u
 
@@ -59,14 +59,14 @@ typedef int (*headers_iter_fn)(const char *name, const char *value, void *ctx);
  * @return A new map with HEADERS_DEFAULT_CAPACITY buckets, or NULL on
  *         allocation failure.
  */
-headers_t *headers_create(void);
+headers_t *create_headers(void);
 
 /**
  * @brief Release a map and every entry it owns.
  *
  * @param[in] headers Map to destroy; may be NULL.
  */
-void headers_destroy(headers_t *headers);
+void destroy_headers(headers_t *headers);
 
 /**
  * @brief Insert or replace the values stored under a name.
@@ -99,7 +99,7 @@ int headers_add(headers_t *headers, const char *name, const char *value);
  * @param[in] headers Map to search.
  * @param[in] name    Header name, matched case-insensitively.
  * @return A borrowed pointer to the stored value, or NULL if absent. The
- *         pointer is invalidated by any later mutation or headers_destroy().
+ *         pointer is invalidated by any later mutation or destroy_headers().
  */
 const char *headers_get(const headers_t *headers, const char *name);
 
