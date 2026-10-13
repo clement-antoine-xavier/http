@@ -1,0 +1,68 @@
+# Build and test on Linux (GCC/Clang) and macOS (Clang).
+#
+# Sanitizers are enabled on Linux, where AddressSanitizer includes
+# LeakSanitizer, so leaks in the code under test fail the run. Apple clang does
+# not support LeakSanitizer, so the macOS row builds and tests without
+# sanitizers. The test harness uses __attribute__((constructor)), which is
+# available on GCC/Clang but not MSVC, which is why Windows is not in the matrix.
+name: CMake
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Report every matrix combination instead of stopping at the first failure.
+      fail-fast: false
+
+      matrix:
+        include:
+          - os: ubuntu-latest
+            c_compiler: gcc
+            cpp_compiler: g++
+            sanitizers: "ON"
+          - os: ubuntu-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+            sanitizers: "ON"
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+            sanitizers: "OFF"
+
+    env:
+      BUILD_DIR: ${{ github.workspace }}/build
+      BUILD_TYPE: Release
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: >
+        cmake -B "$BUILD_DIR"
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+        -DBUILD_TESTING=ON
+        -DENABLE_SANITIZERS=${{ matrix.sanitizers }}
+        -S "$GITHUB_WORKSPACE"
+
+    - name: Build
+      run: cmake --build "$BUILD_DIR" --config $BUILD_TYPE
+
+    - name: Test
+      working-directory: ${{ env.BUILD_DIR }}
+      env:
+        # Turn UBSan diagnostics into failures so CI does not pass on undefined
+        # behavior. ASan (with LeakSanitizer) already aborts on error.
+        UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        ASAN_OPTIONS: detect_leaks=1
+      # --build-config is required by multi-config generators and harmless for
+      # the single-config generators used on Linux and macOS.
+      run: ctest --build-config $BUILD_TYPE --output-on-failure
